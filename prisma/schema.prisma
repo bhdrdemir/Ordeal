@@ -1,0 +1,279 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth Models ───────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  apiKeys     ApiKey[]
+  providers   Provider[]
+  evaluations Evaluation[]
+  humanScores HumanScore[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── API Key Management ────────────────────────────────────
+
+model ApiKey {
+  id           String   @id @default(cuid())
+  userId       String
+  providerId   String
+  encryptedKey String
+  label        String   @default("")
+  createdAt    DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+}
+
+// ─── Provider System ───────────────────────────────────────
+
+enum ProviderType {
+  BUILTIN
+  CUSTOM
+  TEMPLATE
+}
+
+enum AuthType {
+  BEARER
+  HEADER
+  QUERY
+  CUSTOM
+  NONE
+}
+
+model Provider {
+  id          String       @id @default(cuid())
+  userId      String?
+  name        String
+  slug        String
+  description String       @default("")
+  type        ProviderType @default(CUSTOM)
+
+  // Connection config
+  baseUrl      String       @default("")
+  headers      Json         @default("{}")
+  bodyTemplate Json         @default("{}")
+  authType     AuthType     @default(BEARER)
+  authConfig   Json         @default("{}")
+
+  // Custom code (runs in browser sandbox)
+  customCode  String?
+
+  // Models available for this provider
+  models      Json         @default("[]")
+
+  // Visibility
+  isPublic    Boolean      @default(false)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiKeys     ApiKey[]
+  evalModels  EvalModel[]
+
+  @@unique([userId, slug])
+  @@index([isPublic])
+}
+
+// ─── Evaluation System ─────────────────────────────────────
+
+enum EvalStatus {
+  DRAFT
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model Evaluation {
+  id          String     @id @default(cuid())
+  userId      String
+  name        String
+  description String     @default("")
+  status      EvalStatus @default(DRAFT)
+
+  // Judge configuration
+  judgeProviderId String?
+  judgeModel      String?
+  judgePrompt     String?
+
+  // Scoring criteria for human & AI judges
+  criteria    Json       @default("[]")
+
+  // Settings
+  runsPerPrompt Int      @default(1)
+  temperature   Float    @default(0.7)
+  maxTokens     Int      @default(2048)
+
+  // Leaderboard
+  isPublic    Boolean    @default(false)
+
+  // Progress tracking
+  totalTasks    Int      @default(0)
+  completedTasks Int     @default(0)
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompts     EvalPrompt[]
+  models      EvalModel[]
+  results     EvalResult[]
+  shareLink   ShareLink?
+
+  @@index([userId, status])
+  @@index([isPublic])
+}
+
+model EvalPrompt {
+  id       String @id @default(cuid())
+  evalId   String
+  content  String
+  category String @default("general")
+  order    Int    @default(0)
+
+  evaluation Evaluation   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+  results    EvalResult[]
+
+  @@index([evalId])
+}
+
+model EvalModel {
+  id         String @id @default(cuid())
+  evalId     String
+  providerId String
+  modelId    String
+  label      String @default("")
+
+  evaluation Evaluation   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+  provider   Provider     @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  results    EvalResult[]
+
+  @@unique([evalId, providerId, modelId])
+  @@index([evalId])
+}
+
+model EvalResult {
+  id            String   @id @default(cuid())
+  evalId        String
+  promptId      String
+  evalModelId   String
+
+  // Response
+  response      String
+
+  // Auto metrics
+  latency       Float?
+  cost          Float?
+  inputTokens   Int?
+  outputTokens  Int?
+
+  // AI Judge score
+  aiScore       Float?
+  aiScoreBreakdown Json?
+  aiFeedback    String?
+
+  // Aggregated human score (computed)
+  humanScore    Float?
+
+  // Format compliance
+  formatScore   Float?
+
+  // Error
+  error         String?
+
+  runIndex      Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  evaluation  Evaluation   @relation(fields: [evalId], references: [id], onDelete: Cascade)
+  prompt      EvalPrompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  evalModel   EvalModel    @relation(fields: [evalModelId], references: [id], onDelete: Cascade)
+  humanScores HumanScore[]
+
+  @@index([evalId])
+  @@index([evalModelId])
+}
+
+// ─── Human Scoring ─────────────────────────────────────────
+
+model HumanScore {
+  id          String @id @default(cuid())
+  resultId    String
+  userId      String
+
+  score       Float
+  breakdown   Json    @default("{}")
+  comment     String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  result      EvalResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([resultId, userId])
+  @@index([resultId])
+}
+
+// ─── Sharing ───────────────────────────────────────────────
+
+model ShareLink {
+  id        String   @id @default(cuid())
+  evalId    String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  evaluation Evaluation @relation(fields: [evalId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="ig" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ea580c;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="ig2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fb923c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f97316;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#18181b"/>
+
+  <!-- Three bars -->
+  <rect x="12" y="36" width="10" height="20" rx="2.5" fill="#fdba74" opacity="0.7"/>
+  <rect x="27" y="24" width="10" height="32" rx="2.5" fill="url(#ig2)"/>
+  <rect x="42" y="10" width="10" height="46" rx="2.5" fill="url(#ig)"/>
+
+  <!-- Checkmark -->
+  <polyline points="44,24 47,29 53,18" fill="none" stroke="#18181b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 100" width="360" height="100">
+  <defs>
+    <linearGradient id="bar-grad-d" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ea580c;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bar-grad-accent-d" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fb923c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f97316;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Three benchmark bars -->
+  <rect x="12" y="52" width="14" height="34" rx="3" fill="#c2410c" opacity="0.6"/>
+  <rect x="32" y="34" width="14" height="52" rx="3" fill="url(#bar-grad-accent-d)" opacity="0.8"/>
+  <rect x="52" y="14" width="14" height="72" rx="3" fill="url(#bar-grad-d)" />
+
+  <!-- Small checkmark on top bar -->
+  <polyline points="55,32 59,38 67,25" fill="none" stroke="#18181b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Text: ordeal -->
+  <text x="82" y="66" font-family="'Inter', 'Segoe UI', -apple-system, sans-serif" font-size="46" font-weight="700" fill="#fafafa" letter-spacing="-1.5">ordeal</text>
+
+  <!-- Tagline -->
+  <text x="84" y="84" font-family="'Inter', 'Segoe UI', -apple-system, sans-serif" font-size="10.5" font-weight="500" fill="#71717a" letter-spacing="2.5">LLM EVALUATION</text>
+</svg>
