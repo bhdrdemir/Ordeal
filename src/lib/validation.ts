@@ -39,7 +39,14 @@ export const evaluationCreateSchema = z.object({
   temperature,
   maxTokens,
   runsPerPrompt: z.number().int().min(1).max(10).default(1),
-  prompts: z.string().min(1).max(10000).array().min(1).max(10),
+  prompts: z
+    .object({
+      content: z.string().min(1).max(10000),
+      category: z.string().max(50).default("general"),
+    })
+    .array()
+    .min(1)
+    .max(50),
   models: z
     .object({
       providerId: z.string(),

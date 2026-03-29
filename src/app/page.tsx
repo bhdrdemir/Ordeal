@@ -1,327 +1,444 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import {
-  BarChart3,
-  Shield,
-  Globe,
   ArrowRight,
+  ArrowUpRight,
   Github,
+  Shield,
+  BarChart3,
   Sparkles,
-  CheckCircle2,
+  Globe,
+  ChevronRight,
 } from 'lucide-react';
 
+/* ─────────────────────────────────────────────
+   Sutéra × Ordeal — "Technical Elegance" Landing
+   ───────────────────────────────────────────── */
+
 export default function Home() {
-  const [animatedCounters, setAnimatedCounters] = useState({
-    providers: 0,
-    metrics: 0,
-    results: 0,
-  });
+  const containerRef = useRef<HTMLDivElement>(null);
   const [visibleSections, setVisibleSections] = useState<string[]>([]);
   const [heroVisible, setHeroVisible] = useState(false);
-  const [typedText, setTypedText] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
+
+  // Typing effect
   const typingTexts = [
     'Test Any LLM API',
     'Compare Model Performance',
     'Your Prompts, Your Rules',
   ];
+  const [typedText, setTypedText] = useState('');
   const [typingIndex, setTypingIndex] = useState(0);
   const [isTypingForward, setIsTypingForward] = useState(true);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Typing effect
   useEffect(() => {
     const currentText = typingTexts[typingIndex];
     let timer: NodeJS.Timeout;
-
     if (isTypingForward) {
       if (typedText.length < currentText.length) {
-        timer = setTimeout(() => {
-          setTypedText(currentText.slice(0, typedText.length + 1));
-        }, 80);
+        timer = setTimeout(() => setTypedText(currentText.slice(0, typedText.length + 1)), 70);
       } else {
-        timer = setTimeout(() => {
-          setIsTypingForward(false);
-        }, 2000);
+        timer = setTimeout(() => setIsTypingForward(false), 2200);
       }
     } else {
       if (typedText.length > 0) {
-        timer = setTimeout(() => {
-          setTypedText(typedText.slice(0, typedText.length - 1));
-        }, 40);
+        timer = setTimeout(() => setTypedText(typedText.slice(0, typedText.length - 1)), 35);
       } else {
         setTypingIndex((typingIndex + 1) % typingTexts.length);
         setIsTypingForward(true);
       }
     }
-
     return () => clearTimeout(timer);
   }, [typedText, typingIndex, isTypingForward, typingTexts]);
 
-  // Intersection Observer for scroll animations
+  // Live clock (Sutéra-style)
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Intersection Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !visibleSections.includes(entry.target.id)) {
             setVisibleSections((prev) => [...prev, entry.target.id]);
-
-            // Trigger counter animation
-            if (entry.target.id === 'stats-section') {
-              animateCounters();
-            }
           }
         });
       },
-      { threshold: 0.3 }
+      { threshold: 0.15 }
     );
-
     const sections = containerRef.current?.querySelectorAll('[data-animate]');
-    sections?.forEach((section) => observer.observe(section));
-
+    sections?.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
   }, [visibleSections]);
 
-  const animateCounters = () => {
-    let current = { providers: 0, metrics: 0, results: 0 };
-    const targets = { providers: 10, metrics: 15, results: 100 };
-    const increment = { providers: 0.5, metrics: 0.8, results: 5 };
+  // Counter animation
+  const [counters, setCounters] = useState({ providers: 0, metrics: 0, evals: 0 });
+  const countersStarted = useRef(false);
 
+  const animateCounters = useCallback(() => {
+    if (countersStarted.current) return;
+    countersStarted.current = true;
+    const targets = { providers: 10, metrics: 15, evals: 100 };
+    const current = { providers: 0, metrics: 0, evals: 0 };
+    const inc = { providers: 0.5, metrics: 0.7, evals: 5 };
     const timer = setInterval(() => {
-      current.providers += increment.providers;
-      current.metrics += increment.metrics;
-      current.results += increment.results;
-
-      if (current.providers >= targets.providers) current.providers = targets.providers;
-      if (current.metrics >= targets.metrics) current.metrics = targets.metrics;
-      if (current.results >= targets.results) current.results = targets.results;
-
-      setAnimatedCounters({
-        providers: Math.floor(current.providers),
-        metrics: Math.floor(current.metrics),
-        results: Math.floor(current.results),
-      });
-
-      if (
-        current.providers >= targets.providers &&
-        current.metrics >= targets.metrics &&
-        current.results >= targets.results
-      ) {
-        clearInterval(timer);
-      }
+      current.providers = Math.min(current.providers + inc.providers, targets.providers);
+      current.metrics = Math.min(current.metrics + inc.metrics, targets.metrics);
+      current.evals = Math.min(current.evals + inc.evals, targets.evals);
+      setCounters({ providers: Math.floor(current.providers), metrics: Math.floor(current.metrics), evals: Math.floor(current.evals) });
+      if (current.providers >= targets.providers && current.metrics >= targets.metrics && current.evals >= targets.evals) clearInterval(timer);
     }, 30);
-  };
-
-  // Floating particles — generated client-side only to avoid hydration mismatch
-  const [particles, setParticles] = useState<Array<{ id: number; left: number; delay: number; duration: number }>>([]);
+  }, []);
 
   useEffect(() => {
-    setParticles(
-      Array.from({ length: 20 }, (_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 2,
-        duration: 15 + Math.random() * 10,
-      }))
-    );
-    // Show hero immediately on mount with a tiny delay for smooth entrance
+    if (visibleSections.includes('stats-strip')) animateCounters();
+  }, [visibleSections, animateCounters]);
+
+  // Hero entrance
+  useEffect(() => {
     requestAnimationFrame(() => setHeroVisible(true));
   }, []);
 
-  const Particles = () => (
-    <>
-      {particles.map((particle) => (
-        <div
-          key={particle.id}
-          className="absolute w-2 h-2 bg-orange-400 rounded-full opacity-60"
-          style={{
-            left: `${particle.left}%`,
-            bottom: '-10px',
-            animation: `float-up ${particle.duration}s linear infinite`,
-            animationDelay: `${particle.delay}s`,
-          }}
-        />
-      ))}
-    </>
-  );
+  const isVisible = (id: string) => visibleSections.includes(id);
+
+  // Floating particles (client-side only)
+  const [particles, setParticles] = useState<Array<{ id: number; left: number; delay: number; duration: number; size: number }>>([]);
+  useEffect(() => {
+    setParticles(
+      Array.from({ length: 15 }, (_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 3,
+        duration: 18 + Math.random() * 12,
+        size: 2 + Math.random() * 3,
+      }))
+    );
+  }, []);
 
   const features = [
     {
       icon: Shield,
+      tag: '01',
       title: 'Custom APIs',
-      description: 'Bring your own providers or add custom API endpoints for proprietary models.',
+      description: 'Bring your own providers or define custom API endpoints. Write JavaScript handlers for proprietary models.',
+      accent: 'border-orange-400',
     },
     {
       icon: BarChart3,
+      tag: '02',
       title: 'Multi-Metric Scoring',
-      description: 'Grade models on quality, latency, cost, and any custom metrics you define.',
+      description: 'Grade models on quality, latency, cost, and any custom metrics you define. Full flexibility.',
+      accent: 'border-orange-500',
     },
     {
       icon: Sparkles,
+      tag: '03',
       title: 'Human + AI Judges',
-      description: 'Combine automatic scoring with human feedback for comprehensive evaluation.',
+      description: 'Combine automated scoring with human evaluation for comprehensive, trustworthy results.',
+      accent: 'border-orange-600',
     },
     {
       icon: Globe,
+      tag: '04',
       title: 'Public Leaderboard',
-      description: 'Share results with the community and see how your evals compare.',
+      description: 'Share your benchmarks with the community. See how your evals compare globally.',
+      accent: 'border-orange-400',
     },
   ];
 
   const providers = [
-    'OpenAI',
-    'Anthropic',
-    'Google',
-    'Mistral',
-    'Cohere',
-    'Custom API',
+    { name: 'OpenAI', tag: 'GPT-4o, o1, o3' },
+    { name: 'Anthropic', tag: 'Claude 4, Sonnet' },
+    { name: 'Google', tag: 'Gemini 2.5' },
+    { name: 'Mistral', tag: 'Large, Codestral' },
+    { name: 'Cohere', tag: 'Command R+' },
+    { name: 'Custom API', tag: 'Any endpoint' },
   ];
 
   const steps = [
-    {
-      number: '1',
-      title: 'Configure Providers',
-      description: 'Add your API keys securely. They stay on your device.',
-    },
-    {
-      number: '2',
-      title: 'Run Evaluations',
-      description: 'Write test prompts and run them against multiple models in parallel.',
-    },
-    {
-      number: '3',
-      title: 'Compare Results',
-      description: 'View side-by-side metrics, charts, and detailed analysis.',
-    },
+    { num: '01', title: 'Configure Providers', desc: 'Add API keys securely. They stay encrypted on your device.' },
+    { num: '02', title: 'Run Evaluations', desc: 'Write prompts, run them against multiple models in parallel.' },
+    { num: '03', title: 'Compare Results', desc: 'View side-by-side metrics, charts, and detailed analysis.' },
   ];
 
-  const isVisible = (sectionId: string) => visibleSections.includes(sectionId);
-
   return (
-    <div ref={containerRef} className="min-h-screen bg-white">
+    <div ref={containerRef} className="min-h-screen bg-[#fafafa] blueprint-grid relative">
+      {/* Grid crosshair overlay */}
+      <div className="fixed inset-0 grid-crosshairs pointer-events-none z-0" />
+
       <Navbar />
 
-      {/* ═══════════════ HERO ═══════════════ */}
-      <section className="relative px-6 py-20 md:py-40 overflow-hidden bg-gradient-to-br from-white via-orange-50/50 to-white">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 animate-gradient-shift opacity-40 -z-10" style={{
-          background: 'linear-gradient(-45deg, #fff7ed, #fed7aa, #fef3c7, #fff7ed)',
-          backgroundSize: '400% 400%',
-        }} />
-
+      {/* ══════════ HERO ══════════ */}
+      <section className="relative px-6 pt-8 pb-20 md:pt-16 md:pb-32 overflow-hidden min-h-[90vh] flex items-center">
         {/* Floating particles */}
-        <div className="absolute inset-0 overflow-hidden -z-5 h-screen">
-          <Particles />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          {particles.map((p) => (
+            <div
+              key={p.id}
+              className="absolute rounded-full bg-orange-400/50"
+              style={{
+                width: p.size,
+                height: p.size,
+                left: `${p.left}%`,
+                bottom: '-10px',
+                animation: `float-up ${p.duration}s linear infinite`,
+                animationDelay: `${p.delay}s`,
+              }}
+            />
+          ))}
         </div>
 
-        {/* Blur circles */}
-        <div className="absolute top-20 right-0 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-orange-100/20 rounded-full blur-3xl -z-10" />
+        {/* Orb glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-orange-400/15 via-orange-300/10 to-transparent blur-3xl animate-orb-pulse pointer-events-none z-0" />
 
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          {/* Main heading with glow effect */}
-          <h1 className={`text-6xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight transition-all duration-500 ordeal-glow ${
-            heroVisible ? 'animate-fade-in-up' : 'opacity-0'
-          }`} style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}>
-            Ordeal
-          </h1>
+        <div className="max-w-7xl mx-auto w-full relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
 
-          {/* Typing effect subtitle */}
-          <div className={`min-h-24 md:min-h-20 flex items-center justify-center mb-8 transition-all duration-500 ${
-            heroVisible ? 'animate-fade-in-up' : 'opacity-0'
-          }`}>
-            <span className="gradient-text text-3xl md:text-4xl font-bold">
-              {typedText}
-              <span className="animate-typing ml-1">|</span>
-            </span>
-          </div>
+            {/* Left column — Main heading (Sutéra-style massive type) */}
+            <div className="lg:col-span-8">
+              {/* Mono label */}
+              <div className={`mono-label mb-6 transition-all duration-500 ${heroVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+                [ LLM Benchmark Platform ]
+              </div>
 
-          {/* Description */}
-          <p className={`text-lg md:text-xl text-slate-600 mb-12 max-w-2xl mx-auto leading-relaxed transition-all duration-700 ${
-            heroVisible ? 'animate-fade-in-up' : 'opacity-0'
-          }`}>
-            Build benchmarks that matter. Compare any model with custom metrics, automated scoring, and shareable results.
-          </p>
+              {/* Giant heading */}
+              <div className="overflow-hidden mb-6">
+                <h1
+                  className={`text-[clamp(52px,8vw,140px)] font-normal leading-[0.95] tracking-tight transition-all duration-700 ordeal-glow-hero ${
+                    heroVisible ? 'animate-line-reveal' : 'opacity-0 translate-y-full'
+                  }`}
+                  style={{ fontFamily: "var(--font-slabo), 'Slabo 27px', serif" }}
+                >
+                  Ordeal
+                </h1>
+              </div>
 
-          {/* CTA Buttons */}
-          <div className={`flex flex-col sm:flex-row gap-4 justify-center mb-16 transition-all duration-700 ${
-            heroVisible ? 'animate-fade-in-up' : 'opacity-0'
-          }`}>
-            <Link
-              href="/login"
-              className="group inline-flex items-center justify-center px-8 py-4 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-all hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 animate-pulse-glow-landing"
-            >
-              Get Started Free
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/leaderboard"
-              className="inline-flex items-center justify-center px-8 py-4 rounded-lg border-2 border-orange-500 text-orange-500 font-semibold hover:bg-orange-50 transition-all active:scale-95"
-            >
-              View Public Leaderboard
-            </Link>
-          </div>
+              {/* Typing subtitle — large */}
+              <div className={`min-h-16 md:min-h-20 mb-8 transition-all duration-600 ${heroVisible ? 'animate-fade-in-up' : 'opacity-0'}`}
+                   style={{ animationDelay: '0.3s' }}>
+                <span className="text-3xl md:text-5xl lg:text-6xl font-semibold text-zinc-900 leading-tight">
+                  {typedText}
+                  <span className="animate-typing text-orange-500 ml-1">|</span>
+                </span>
+              </div>
 
-          {/* Stats */}
-          <div
-            id="stats-section"
-            data-animate
-            className={`flex flex-wrap justify-center gap-8 md:gap-16 pt-12 border-t border-orange-200 transition-all duration-500 ${
-              isVisible('stats-section') ? 'animate-fade-in-up' : 'opacity-0'
-            }`}
-          >
-            <div className="text-center">
-              <p className="text-3xl md:text-4xl font-bold text-orange-500">{animatedCounters.providers}+</p>
-              <p className="text-sm text-slate-600 mt-2">Providers Supported</p>
+              {/* Description */}
+              <p className={`text-lg md:text-xl text-zinc-500 max-w-xl leading-relaxed mb-10 transition-all duration-700 ${heroVisible ? 'animate-fade-in-up' : 'opacity-0'}`}
+                 style={{ animationDelay: '0.5s' }}>
+                Build benchmarks that matter. Compare any model with custom metrics,
+                automated scoring, and shareable results.
+              </p>
+
+              {/* CTA Row */}
+              <div className={`flex flex-wrap gap-4 transition-all duration-700 ${heroVisible ? 'animate-fade-in-up' : 'opacity-0'}`}
+                   style={{ animationDelay: '0.6s' }}>
+                <Link
+                  href="/login"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 bg-zinc-950 text-white text-sm font-medium hover:bg-zinc-800 transition-all active:scale-[0.97]"
+                >
+                  Get Started Free
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  href="/leaderboard"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 border border-zinc-300 text-zinc-700 text-sm font-medium hover:border-orange-400 hover:text-orange-600 transition-all active:scale-[0.97]"
+                >
+                  View Leaderboard
+                  <ArrowUpRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-3xl md:text-4xl font-bold text-orange-500">{animatedCounters.metrics}+</p>
-              <p className="text-sm text-slate-600 mt-2">Metrics Available</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl md:text-4xl font-bold text-orange-500">∞</p>
-              <p className="text-sm text-slate-600 mt-2">Evals & Results</p>
+
+            {/* Right column — Tech panels (Sutéra-style info windows) */}
+            <div className="lg:col-span-4 space-y-4 hidden lg:block">
+              {/* Panel: About */}
+              <div className={`tech-panel transition-all duration-600 ${heroVisible ? 'animate-slide-in-right' : 'opacity-0'}`}
+                   style={{ animationDelay: '0.4s' }}>
+                <div className="tech-panel-header">
+                  <span>Ordeal /v1</span>
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-sm text-zinc-600 leading-relaxed" style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
+                    OPEN-SOURCE LLM BENCHMARKING.
+                    TEST ANY MODEL WITH YOUR PROMPTS
+                    AND YOUR RULES. COMPARE QUALITY,
+                    SPEED, AND COST.
+                  </p>
+                  <div className="flex gap-2">
+                    <span className="inline-block px-2 py-0.5 text-[9px] font-medium border border-orange-300 text-orange-600 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
+                      Free
+                    </span>
+                    <span className="inline-block px-2 py-0.5 text-[9px] font-medium border border-zinc-300 text-zinc-500 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
+                      Open Source
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Panel: Core Threads */}
+              <div className={`tech-panel transition-all duration-600 ${heroVisible ? 'animate-slide-in-right' : 'opacity-0'}`}
+                   style={{ animationDelay: '0.6s' }}>
+                <div className="tech-panel-header">
+                  <span>Core Threads</span>
+                </div>
+                <div className="p-4 space-y-2.5">
+                  {[
+                    { tag: '01', label: 'CUSTOM PROVIDERS' },
+                    { tag: '02', label: 'MULTI-METRIC EVAL' },
+                    { tag: '03', label: 'HUMAN + AI SCORING' },
+                    { tag: '04', label: 'PUBLIC LEADERBOARD' },
+                  ].map((item) => (
+                    <div key={item.tag} className="flex items-center gap-3">
+                      <span className="text-[10px] text-orange-500 font-medium" style={{ fontFamily: 'var(--font-mono)' }}>
+                        {item.tag}.
+                      </span>
+                      <div className="flex-1 h-px bg-zinc-200" />
+                      <span className="text-[10px] text-zinc-600 tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Panel: Clock */}
+              <div className={`tech-panel transition-all duration-600 ${heroVisible ? 'animate-slide-in-right' : 'opacity-0'}`}
+                   style={{ animationDelay: '0.8s' }}>
+                <div className="p-3 flex items-center justify-between">
+                  <span className="mono-label-sm">Local Time</span>
+                  <span className="text-sm text-zinc-800 tabular-nums" style={{ fontFamily: 'var(--font-mono)' }}>
+                    {currentTime}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ FEATURES ═══════════════ */}
-      <section id="features-section" data-animate className="px-6 py-20 md:py-32 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className={`text-center mb-16 transition-all duration-500 ${
-            isVisible('features-section') ? 'animate-fade-in-up' : 'opacity-0'
-          }`}>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-950 mb-4">
-              Everything you need
-            </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Professional tools for rigorous LLM evaluation
+      {/* ══════════ STATS STRIP ══════════ */}
+      <section id="stats-strip" data-animate className="relative border-y border-zinc-200 bg-white/60 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className={`flex flex-wrap justify-between items-center gap-8 transition-all duration-500 ${isVisible('stats-strip') ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            {[
+              { value: `${counters.providers}+`, label: 'Providers' },
+              { value: `${counters.metrics}+`, label: 'Metrics' },
+              { value: '\u221E', label: 'Evaluations' },
+            ].map((stat, i) => (
+              <div key={i} className="flex items-baseline gap-3">
+                <span className="text-3xl md:text-4xl font-bold text-orange-500 tabular-nums">{stat.value}</span>
+                <span className="mono-label">{stat.label}</span>
+              </div>
+            ))}
+            <Link
+              href="https://github.com/bhdrdemir/Ordeal"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 border border-zinc-300 text-zinc-600 text-xs hover:border-zinc-500 transition-all"
+              style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}
+            >
+              <Github className="w-4 h-4" />
+              GITHUB
+              <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════ MARQUEE SEPARATOR ══════════ */}
+      <div className="overflow-hidden border-b border-zinc-200 bg-white/40 py-3">
+        <div className="marquee-track">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span key={i} className="mono-label-sm whitespace-nowrap mx-8 text-zinc-300">
+              BENCHMARK \u2026 EVALUATE \u2026 COMPARE \u2026 ITERATE \u2026
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ══════════ ABOUT / MISSION (Sutéra-style large text) ══════════ */}
+      <section id="about-section" data-animate className="px-6 py-24 md:py-36">
+        <div className="max-w-7xl mx-auto">
+          <div className={`transition-all duration-700 ${isVisible('about-section') ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <p className="text-[clamp(28px,4.5vw,72px)] font-semibold leading-[1.15] text-zinc-900 max-w-5xl">
+              We believe benchmarks should be{' '}
+              <span className="text-orange-500">transparent</span>,{' '}
+              <span className="text-orange-500">customizable</span>,
+              and owned by the{' '}
+              <span className="inline-flex items-baseline">
+                community
+                <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-orange-400 ml-2 animate-float-slow" />
+              </span>
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          {/* Tech panel aside */}
+          <div className={`mt-12 max-w-md transition-all duration-700 ${isVisible('about-section') ? 'animate-slide-in-left' : 'opacity-0'}`}
+               style={{ animationDelay: '0.3s' }}>
+            <div className="tech-panel">
+              <div className="tech-panel-header"><span>Essentially</span></div>
+              <div className="p-4 text-xs text-zinc-500 leading-relaxed" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+                EVERY API SENDS AND RECEIVES DATA
+                DIFFERENTLY. ORDEAL LETS YOU DEFINE
+                HOW REQUESTS ARE BUILT AND RESPONSES
+                ARE PARSED — FOR ANY MODEL, ANY
+                PROVIDER.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════ FEATURES (Sutéra-style numbered grid) ══════════ */}
+      <section id="features-section" data-animate className="px-6 py-20 md:py-32 border-t border-zinc-200">
+        <div className="max-w-7xl mx-auto">
+          <div className={`flex items-end justify-between mb-16 transition-all duration-500 ${isVisible('features-section') ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <div>
+              <span className="mono-label block mb-3">[ Capabilities ]</span>
+              <h2 className="text-4xl md:text-6xl font-semibold text-zinc-900">
+                Everything you need
+              </h2>
+            </div>
+            <span className="mono-label-sm hidden md:block">/ {features.length.toString().padStart(2, '0')} features</span>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
             {features.map((feature, i) => {
               const Icon = feature.icon;
               return (
                 <div
                   key={i}
-                  className={`group p-8 rounded-xl border border-slate-200 hover:border-orange-400 hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-500 bg-white hover-lift gradient-border ${
+                  className={`group relative p-8 bg-white border border-zinc-200 hover:border-orange-400 transition-all duration-500 scan-line-container ${
                     isVisible('features-section') ? 'animate-fade-in-up' : 'opacity-0'
                   }`}
-                  style={{
-                    animationDelay: isVisible('features-section') ? `${i * 100}ms` : '0',
-                  }}
+                  style={{ animationDelay: isVisible('features-section') ? `${i * 120}ms` : '0' }}
                 >
-                  <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
-                    <Icon className="w-6 h-6 text-orange-500" />
+                  {/* Tag number */}
+                  <span className="absolute top-4 right-4 text-[10px] text-zinc-300" style={{ fontFamily: 'var(--font-mono)' }}>
+                    {feature.tag}.
+                  </span>
+
+                  <div className={`w-10 h-10 flex items-center justify-center border-l-2 ${feature.accent} mb-5`}>
+                    <Icon className="w-5 h-5 text-zinc-700 group-hover:text-orange-500 transition-colors" />
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-950 mb-2">{feature.title}</h3>
-                  <p className="text-slate-600 leading-relaxed">{feature.description}</p>
+
+                  <h3 className="text-xl font-semibold text-zinc-900 mb-2">{feature.title}</h3>
+                  <p className="text-sm text-zinc-500 leading-relaxed">{feature.description}</p>
+
+                  {/* Bottom connector line */}
+                  <div className="absolute bottom-0 left-8 right-8 h-px bg-zinc-100 group-hover:bg-orange-300 transition-colors" />
                 </div>
               );
             })}
@@ -329,112 +446,120 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══════════════ HOW IT WORKS ═══════════════ */}
-      <section id="steps-section" data-animate className="px-6 py-20 md:py-32 bg-orange-50/30">
-        <div className="max-w-4xl mx-auto">
-          <div className={`text-center mb-16 transition-all duration-500 ${
-            isVisible('steps-section') ? 'animate-fade-in-up' : 'opacity-0'
-          }`}>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-950 mb-4">
+      {/* ══════════ HOW IT WORKS (Editorial timeline) ══════════ */}
+      <section id="steps-section" data-animate className="px-6 py-20 md:py-32 bg-white/50 border-t border-zinc-200">
+        <div className="max-w-5xl mx-auto">
+          <div className={`mb-16 transition-all duration-500 ${isVisible('steps-section') ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <span className="mono-label block mb-3">[ Workflow ]</span>
+            <h2 className="text-4xl md:text-6xl font-semibold text-zinc-900">
               Simple workflow
             </h2>
-            <p className="text-lg text-slate-600">
-              Three steps to comprehensive benchmarking
-            </p>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-0">
             {steps.map((step, i) => (
               <div
                 key={i}
-                className={`flex gap-6 items-start transition-all duration-500 ${
+                className={`group flex gap-8 items-start py-10 border-b border-zinc-200 last:border-b-0 transition-all duration-500 ${
                   isVisible('steps-section') ? 'animate-fade-in-up' : 'opacity-0'
                 }`}
-                style={{
-                  animationDelay: isVisible('steps-section') ? `${i * 150}ms` : '0',
-                }}
+                style={{ animationDelay: isVisible('steps-section') ? `${i * 150}ms` : '0' }}
               >
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 text-white font-bold flex items-center justify-center text-lg shadow-lg shadow-orange-500/30">
-                    {step.number}
-                  </div>
-                </div>
+                {/* Step number */}
+                <span
+                  className="text-5xl md:text-7xl font-bold text-zinc-100 group-hover:text-orange-200 transition-colors leading-none select-none"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                >
+                  {step.num}
+                </span>
+
                 <div className="flex-1 pt-2">
-                  <h3 className="text-xl font-semibold text-slate-950 mb-2">{step.title}</h3>
-                  <p className="text-slate-600 leading-relaxed">{step.description}</p>
+                  <h3 className="text-2xl font-semibold text-zinc-900 mb-2 group-hover:text-orange-600 transition-colors">
+                    {step.title}
+                  </h3>
+                  <p className="text-zinc-500 leading-relaxed max-w-lg">{step.desc}</p>
                 </div>
+
+                <ChevronRight className="w-5 h-5 text-zinc-300 group-hover:text-orange-400 group-hover:translate-x-1 transition-all mt-4 hidden md:block" />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ SUPPORTED PROVIDERS ═══════════════ */}
-      <section id="providers-section" data-animate className="px-6 py-20 md:py-32 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <div className={`text-center mb-12 transition-all duration-500 ${
-            isVisible('providers-section') ? 'animate-fade-in-up' : 'opacity-0'
-          }`}>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-950 mb-4">
-              Integrations
-            </h2>
-            <p className="text-lg text-slate-600">
+      {/* ══════════ PROVIDERS (Scattered Sutéra-style) ══════════ */}
+      <section id="providers-section" data-animate className="px-6 py-20 md:py-32 border-t border-zinc-200">
+        <div className="max-w-6xl mx-auto">
+          <div className={`text-center mb-16 transition-all duration-500 ${isVisible('providers-section') ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <span className="mono-label block mb-3">[ Integrations ]</span>
+            <h2 className="text-4xl md:text-6xl font-semibold text-zinc-900 mb-4">
               Works with all major providers
-            </p>
+            </h2>
+            <p className="mono-label-sm">(Have fun exploring)</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {providers.map((provider, i) => (
               <div
                 key={i}
-                className={`p-6 rounded-lg border border-slate-200 bg-white text-center hover:border-orange-400 hover:bg-orange-50 transition-all duration-300 cursor-default hover-lift ${
-                  isVisible('providers-section') ? 'animate-fade-in-up' : 'opacity-0'
+                className={`group relative p-6 bg-white border border-zinc-200 hover:border-orange-400 transition-all duration-300 ${
+                  isVisible('providers-section') ? 'animate-scale-in' : 'opacity-0'
                 }`}
-                style={{
-                  animationDelay: isVisible('providers-section') ? `${i * 80}ms` : '0',
-                }}
+                style={{ animationDelay: isVisible('providers-section') ? `${i * 80}ms` : '0' }}
               >
-                <CheckCircle2 className="w-6 h-6 text-orange-500 mx-auto mb-3" />
-                <p className="font-semibold text-slate-900">{provider}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-lg font-semibold text-zinc-900 group-hover:text-orange-600 transition-colors">
+                    {provider.name}
+                  </span>
+                  <ArrowUpRight className="w-4 h-4 text-zinc-300 group-hover:text-orange-400 transition-colors" />
+                </div>
+                <span className="text-[10px] text-zinc-400 tracking-wider" style={{ fontFamily: 'var(--font-mono)' }}>
+                  {provider.tag.toUpperCase()}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════ CTA ═══════════════ */}
-      <section id="cta-section" data-animate className="relative px-6 py-20 md:py-32 overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-        <div className="absolute inset-0 animate-gradient-shift opacity-30 -z-10" style={{
-          background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05))',
-          backgroundSize: '200% 200%',
+      {/* ══════════ CTA (Dark section with grid) ══════════ */}
+      <section id="cta-section" data-animate className="relative px-6 py-24 md:py-36 bg-zinc-950 text-white overflow-hidden">
+        {/* Grid overlay on dark */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)',
+          backgroundSize: '120px 120px',
         }} />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl -z-10" />
 
-        <div className={`max-w-3xl mx-auto text-center transition-all duration-500 ${
-          isVisible('cta-section') ? 'animate-fade-in-up' : 'opacity-0'
-        }`}>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Start benchmarking today
+        {/* Orange glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className={`max-w-4xl mx-auto text-center relative z-10 transition-all duration-500 ${isVisible('cta-section') ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <span className="inline-block mono-label-sm text-zinc-500 mb-6">[ Get Started ]</span>
+
+          <h2 className="text-4xl md:text-6xl font-semibold mb-6 leading-tight">
+            Start benchmarking<br />
+            <span className="text-orange-500">today</span>
           </h2>
-          <p className="text-lg text-slate-300 mb-8 max-w-xl mx-auto">
+
+          <p className="text-zinc-400 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
             Build benchmarks, run evals, share results. Free forever. No credit card required.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/login"
-              className="group inline-flex items-center justify-center px-8 py-4 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-all hover:shadow-2xl hover:shadow-orange-500/50"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-orange-500 text-white font-medium hover:bg-orange-600 transition-all active:scale-[0.97]"
             >
               Get Started
-              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="https://github.com/bhdrdemir/Ordeal"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-8 py-4 rounded-lg border-2 border-orange-500 text-orange-400 font-semibold hover:bg-orange-500/10 transition-all"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-zinc-700 text-zinc-300 font-medium hover:border-orange-500 hover:text-orange-400 transition-all active:scale-[0.97]"
             >
-              <Github className="mr-2 w-5 h-5" />
+              <Github className="w-4 h-4" />
               GitHub
             </Link>
           </div>

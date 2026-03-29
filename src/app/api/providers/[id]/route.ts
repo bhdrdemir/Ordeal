@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { rateLimits } from "@/lib/rate-limit";
+import { rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { providerCreateSchema, safeParse } from "@/lib/validation";
 
 interface RouteParams {
@@ -77,10 +77,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   // Rate limit
   const limiter = rateLimits.api(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {
@@ -155,10 +152,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   // Rate limit
   const limiter = rateLimits.api(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {

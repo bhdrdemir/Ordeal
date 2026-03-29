@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { rateLimits } from "@/lib/rate-limit";
+import { rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { decrypt } from "@/lib/crypto";
 import { runEvaluation, EvalTask } from "@/lib/eval-engine";
 import { getBuiltinProvider } from "@/lib/providers/builtin";
@@ -24,10 +24,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
   // Rate limit: 10 eval runs per minute
   const limiter = rateLimits.evalRun(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {

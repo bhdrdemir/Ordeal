@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { rateLimits } from "@/lib/rate-limit";
+import { rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { evaluationCreateSchema, safeParse } from "@/lib/validation";
 
 /**
@@ -79,10 +79,7 @@ export async function POST(req: NextRequest) {
   // Rate limit
   const limiter = rateLimits.api(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {
@@ -96,32 +93,44 @@ export async function POST(req: NextRequest) {
 
     const data = validation.data;
 
-    // Verify all providers exist
+    // Verify all providers exist AND belong to this user (or are public built-ins)
     const providerIds = Array.from(
       new Set(data.models.map((m) => m.providerId))
     );
     const providers = await prisma.provider.findMany({
-      where: { id: { in: providerIds } },
+      where: {
+        id: { in: providerIds },
+        OR: [
+          { userId: session.user.id },
+          { userId: null }, // built-in providers have no userId
+        ],
+      },
       select: { id: true },
     });
 
     if (providers.length !== providerIds.length) {
       return NextResponse.json(
-        { error: "One or more providers not found" },
+        { error: "One or more providers not found or access denied" },
         { status: 404 }
       );
     }
 
-    // Verify judge provider if specified
+    // Verify judge provider if specified — must also belong to user or be built-in
     if (data.judgeProviderId) {
-      const judgeProvider = await prisma.provider.findUnique({
-        where: { id: data.judgeProviderId },
+      const judgeProvider = await prisma.provider.findFirst({
+        where: {
+          id: data.judgeProviderId,
+          OR: [
+            { userId: session.user.id },
+            { userId: null },
+          ],
+        },
         select: { id: true },
       });
 
       if (!judgeProvider) {
         return NextResponse.json(
-          { error: "Judge provider not found" },
+          { error: "Judge provider not found or access denied" },
           { status: 404 }
         );
       }
@@ -148,13 +157,13 @@ export async function POST(req: NextRequest) {
 
       // Create prompts
       const prompts = await Promise.all(
-        data.prompts.map((content, index) =>
+        data.prompts.map((prompt, index) =>
           tx.evalPrompt.create({
             data: {
               evalId: eval_.id,
-              content,
+              content: prompt.content,
               order: index,
-              category: "general",
+              category: prompt.category || "general",
             },
           })
         )
@@ -189,7 +198,7 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    return NextResponse.json(evaluation, { status: 201 });
+    return NextResponse.json({ evaluation }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/evals]", error);
     return NextResponse.json(

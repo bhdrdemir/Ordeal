@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { encrypt } from "@/lib/crypto";
-import { rateLimits } from "@/lib/rate-limit";
+import { rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { apiKeyCreateSchema, safeParse } from "@/lib/validation";
 
 /**
@@ -21,13 +21,28 @@ export async function GET() {
       select: {
         id: true,
         providerId: true,
+        encryptedKey: true,
         label: true,
         createdAt: true,
+        provider: {
+          select: { name: true },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(keys);
+    // Map to safe response: expose encrypted key for masking display,
+    // flatten providerName for convenience
+    const response = keys.map((key) => ({
+      id: key.id,
+      providerId: key.providerId,
+      providerName: key.provider.name,
+      label: key.label,
+      encryptedKey: key.encryptedKey,
+      createdAt: key.createdAt,
+    }));
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("[GET /api/keys]", error);
     return NextResponse.json(
@@ -50,10 +65,7 @@ export async function POST(req: NextRequest) {
   // Rate limit: 20 key operations per minute
   const limiter = rateLimits.keys(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {

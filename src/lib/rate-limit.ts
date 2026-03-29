@@ -2,6 +2,7 @@
  * Simple in-memory rate limiter (per IP or user ID).
  * For production, replace with Redis-based (e.g. @upstash/ratelimit).
  */
+import { NextResponse } from "next/server";
 
 interface RateLimitEntry {
   count: number;
@@ -56,6 +57,23 @@ export function checkRateLimit(
     remaining: limit - entry.count,
     resetAt: entry.resetAt,
   };
+}
+
+/**
+ * Returns a 429 NextResponse with the standard Retry-After header.
+ * Usage: if (!limiter.success) return rateLimitResponse(limiter.resetAt);
+ */
+export function rateLimitResponse(resetAt: number): NextResponse {
+  const retryAfterSeconds = Math.ceil((resetAt - Date.now()) / 1000);
+  return NextResponse.json(
+    { error: "Rate limit exceeded" },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": String(Math.max(1, retryAfterSeconds)),
+      },
+    }
+  );
 }
 
 /**

@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Slabo_27px, JetBrains_Mono } from 'next/font/google';
 import SessionProvider from '@/components/session-provider';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
+const slabo27px = Slabo_27px({ weight: '400', subsets: ['latin'], variable: '--font-slabo' });
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   title: 'Ordeal - LLM Benchmark Platform',
@@ -26,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth" className="scroll-smooth">
       <head />
-      <body className={`${inter.className} bg-slate-50 text-zinc-900 min-h-screen antialiased`}>
+      <body className={`${inter.className} ${slabo27px.variable} ${jetbrainsMono.variable} bg-slate-50 text-zinc-900 min-h-screen antialiased`}>
         <SessionProvider>
           {children}
         </SessionProvider>

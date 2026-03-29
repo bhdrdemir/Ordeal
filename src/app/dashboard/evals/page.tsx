@@ -54,8 +54,8 @@ export default function EvalsPage() {
         }
 
         const data = await res.json();
-        setEvals(data.evals || []);
-        setTotal(data.total || 0);
+        setEvals(data.data || []);
+        setTotal(data.pagination?.total || 0);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load evaluations');
       } finally {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { rateLimits } from "@/lib/rate-limit";
+import { rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { z } from "zod";
 import { safeParse } from "@/lib/validation";
 
@@ -21,10 +21,8 @@ const updateSchema = z.object({
  */
 export async function GET(_req: NextRequest, { params }: RouteParams) {
   const { id } = await params;
+  // Auth is optional for GET — public evals can be viewed without a session
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   try {
     const evaluation = await prisma.evaluation.findUnique({
@@ -45,6 +43,9 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
             providerId: true,
             modelId: true,
             label: true,
+            provider: {
+              select: { name: true },
+            },
           },
         },
         results: {
@@ -83,15 +84,17 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Verify ownership or public access
-    if (
-      evaluation.userId !== session.user.id &&
-      !evaluation.isPublic
-    ) {
+    // Public evals: anyone can view. Private evals: only the owner.
+    const isOwner = session?.user?.id && evaluation.userId === session.user.id;
+    if (!evaluation.isPublic && !isOwner) {
+      // Not logged in or not owner
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json(evaluation);
+    return NextResponse.json({ evaluation });
   } catch (error) {
     console.error("[GET /api/evals/[id]]", error);
     return NextResponse.json(
@@ -115,10 +118,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   // Rate limit
   const limiter = rateLimits.api(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {
@@ -180,10 +180,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   // Rate limit
   const limiter = rateLimits.api(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {

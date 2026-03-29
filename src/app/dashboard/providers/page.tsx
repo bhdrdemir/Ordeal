@@ -36,8 +36,10 @@ export default function ProvidersPage() {
         const customData = await customRes.json();
         const builtinData = await builtinRes.json();
 
-        setProviders(customData.providers || []);
-        setBuiltinProviders(builtinData.providers || []);
+        // API returns { custom: [...], builtin: [...] }
+        setProviders(customData.custom || []);
+        // Builtin endpoint returns a plain array
+        setBuiltinProviders(Array.isArray(builtinData) ? builtinData : builtinData.providers || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load providers');
       } finally {

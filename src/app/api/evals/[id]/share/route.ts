@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { rateLimits } from "@/lib/rate-limit";
+import { rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { nanoid } from "nanoid";
 
 interface RouteParams {
@@ -22,10 +22,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
   // Rate limit: 5 share link creations per minute
   const limiter = rateLimits.share(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {
@@ -46,23 +43,13 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Check if share link already exists
-    let shareLink = await prisma.shareLink.findUnique({
+    // Upsert share link — atomic, avoids race condition on concurrent requests
+    const slug = nanoid(12);
+    const shareLink = await prisma.shareLink.upsert({
       where: { evalId: id },
+      update: {}, // keep existing slug if already created
+      create: { evalId: id, slug },
     });
-
-    if (!shareLink) {
-      // Generate unique slug
-      const slug = nanoid(12);
-
-      // Create share link
-      shareLink = await prisma.shareLink.create({
-        data: {
-          evalId: id,
-          slug,
-        },
-      });
-    }
 
     // Update evaluation to be public
     await prisma.evaluation.update({
@@ -101,10 +88,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   // Rate limit
   const limiter = rateLimits.share(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {

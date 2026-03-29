@@ -243,50 +243,51 @@ export default function EvalScoringPage() {
         {/* Score */}
         <div>
           <label className="block text-sm font-semibold text-zinc-900 mb-3">
-            Your Score
+            Your Score <span className="text-zinc-400 font-normal">(1–10)</span>
           </label>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <button
-                    key={value}
-                    onClick={() => handleScoreChange(currentResult.id, value)}
-                    className={`w-12 h-12 rounded-lg font-semibold transition-all ${
-                      currentScore === value
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200'
-                    }`}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-zinc-600">Scale: 1-5</p>
-                {currentScore && (
-                  <p className="text-lg font-semibold text-orange-500">
-                    {currentScore}/5
-                  </p>
-                )}
-              </div>
+          <div className="space-y-4">
+            {/* Quick buttons 1-10 */}
+            <div className="flex gap-1 flex-wrap">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
+                <button
+                  key={value}
+                  onClick={() => handleScoreChange(currentResult.id, value)}
+                  className={`w-10 h-10 rounded-lg font-semibold text-sm transition-all ${
+                    currentScore === value
+                      ? 'bg-orange-500 text-white shadow-md'
+                      : 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200'
+                  }`}
+                >
+                  {value}
+                </button>
+              ))}
             </div>
 
-            {/* Slider alternative */}
+            {/* Labels */}
+            <div className="flex justify-between text-xs text-zinc-400">
+              <span>1 — Poor</span>
+              <span>5 — Average</span>
+              <span>10 — Excellent</span>
+            </div>
+
+            {/* Slider */}
             <div>
               <input
                 type="range"
                 min="1"
                 max="10"
-                value={currentScore || 5}
+                step="1"
+                value={currentScore ?? 5}
                 onChange={(e) => handleScoreChange(currentResult.id, parseInt(e.target.value))}
-                className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
               />
-              <div className="flex justify-between text-xs text-zinc-600 mt-1">
-                <span>Poor</span>
-                <span>Excellent</span>
-              </div>
             </div>
+
+            {currentScore !== undefined && (
+              <p className="text-lg font-semibold text-orange-500 text-center">
+                {currentScore} / 10
+              </p>
+            )}
           </div>
         </div>
 

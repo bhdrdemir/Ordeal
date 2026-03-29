@@ -56,7 +56,8 @@ export default function ApiKeysPage() {
 
         if (customRes.ok) {
           const customData = await customRes.json();
-          const customs = Array.isArray(customData) ? customData : customData.providers || [];
+          // API returns { custom: [...], builtin: [...] }
+          const customs = Array.isArray(customData) ? customData : customData.custom || [];
           // Filter out builtins (already added) and add custom ones
           const customOnly = customs.filter((p: { type: string }) => p.type === 'CUSTOM' || p.type === 'TEMPLATE');
           allProviders.push(...customOnly.map((p: { id: string; name: string }) => ({ id: p.id, name: `${p.name} (Custom)` })));

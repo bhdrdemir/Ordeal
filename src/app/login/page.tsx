@@ -2,95 +2,137 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import LoginButtons from "@/components/login-buttons";
-import { Sparkles } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 export default async function LoginPage() {
-  // Server-side auth check
   let isAuthenticated = false;
   try {
     const session = await auth();
-    if (session?.user) {
-      isAuthenticated = true;
-    }
+    if (session?.user) isAuthenticated = true;
   } catch {
     // DB not ready or auth error — just show login page
   }
-
-  // Redirect outside try/catch so NEXT_REDIRECT isn't caught
-  if (isAuthenticated) {
-    redirect("/dashboard");
-  }
+  if (isAuthenticated) redirect("/dashboard");
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
-      {/* Left Side */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-100/20 rounded-full blur-3xl -z-10" />
+    <div className="min-h-screen bg-[#fafafa] blueprint-grid relative flex">
+      {/* Grid overlay */}
+      <div className="fixed inset-0 grid-crosshairs pointer-events-none z-0" />
 
+      {/* Left — Login form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 relative z-10">
         <div className="w-full max-w-sm">
+          {/* Brand */}
           <div className="mb-12">
-            <Link href="/" className="text-2xl font-bold text-slate-950">
-              Ordeal
+            <Link
+              href="/"
+              className="text-sm font-semibold tracking-wider text-zinc-900"
+              style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}
+            >
+              ORDEAL
             </Link>
           </div>
 
+          {/* Heading */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-slate-950 mb-2">
+            <span
+              className="block text-[10px] text-zinc-400 uppercase tracking-wider mb-3"
+              style={{ fontFamily: 'var(--font-mono)' }}
+            >
+              [ Authentication ]
+            </span>
+            <h1 className="text-4xl font-semibold text-zinc-900 mb-2">
               Sign in
             </h1>
-            <p className="text-slate-600">
+            <p className="text-zinc-500 text-sm">
               Start benchmarking LLMs with custom metrics
             </p>
           </div>
 
+          {/* Login Buttons */}
           <LoginButtons />
 
-          <div className="mt-8 pt-6 border-t border-slate-200">
-            <p className="text-xs text-slate-500 text-center">
-              Free forever. No credit card required. Your API keys stay on your device.
-            </p>
+          {/* Footer info */}
+          <div className="mt-10 pt-6 border-t border-zinc-200">
+            <div className="tech-panel">
+              <div className="p-3 space-y-1.5" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.04em' }}>
+                <div className="flex items-center gap-2 text-zinc-500">
+                  <span className="text-orange-500">*</span> FREE FOREVER. NO CREDIT CARD.
+                </div>
+                <div className="flex items-center gap-2 text-zinc-500">
+                  <span className="text-orange-500">*</span> API KEYS ENCRYPTED (AES-256-GCM)
+                </div>
+                <div className="flex items-center gap-2 text-zinc-500">
+                  <span className="text-orange-500">*</span> OPEN SOURCE &mdash; MIT LICENSE
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Right Side */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-orange-500 via-orange-500 to-orange-600 items-center justify-center px-12 py-12 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+      {/* Right — Info panel (Sutéra-style) */}
+      <div className="hidden lg:flex flex-1 bg-zinc-950 items-center justify-center px-12 py-12 relative overflow-hidden">
+        {/* Grid on dark */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)',
+          backgroundSize: '120px 120px',
+        }} />
 
-        <div className="max-w-sm text-white text-center relative z-10">
-          <div className="mb-8 flex justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-              <Sparkles size={32} />
-            </div>
-          </div>
+        {/* Orange orb */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-orange-500/10 rounded-full blur-[100px] pointer-events-none" />
 
-          <h2 className="text-4xl font-bold mb-6">
-            Benchmark like a pro
+        <div className="max-w-sm relative z-10">
+          {/* Title */}
+          <h2
+            className="text-5xl font-semibold text-white mb-8 leading-tight"
+            style={{ fontFamily: "var(--font-slabo), 'Slabo 27px', serif" }}
+          >
+            Benchmark<br />
+            <span className="text-orange-500">like a pro</span>
           </h2>
 
-          <p className="text-lg mb-10 leading-relaxed text-orange-100">
-            Create comprehensive evaluations, test any model, and share results with your team.
-          </p>
+          {/* Features list */}
+          <div className="space-y-5 mb-10">
+            {[
+              { tag: '01', text: 'Custom metrics and scoring criteria' },
+              { tag: '02', text: 'Support for 10+ providers and any custom API' },
+              { tag: '03', text: 'Human + AI judge evaluation' },
+              { tag: '04', text: 'Shareable public leaderboards' },
+            ].map((item) => (
+              <div key={item.tag} className="flex items-start gap-3">
+                <span
+                  className="text-orange-500 text-xs mt-0.5"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                >
+                  {item.tag}.
+                </span>
+                <span className="text-zinc-400 text-sm">{item.text}</span>
+              </div>
+            ))}
+          </div>
 
-          <ul className="space-y-4 text-left mb-10">
-            <li className="flex items-start gap-3">
-              <span className="w-5 h-5 rounded-full bg-orange-300/30 flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5">•</span>
-              <span className="text-orange-100">Custom metrics and scoring</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="w-5 h-5 rounded-full bg-orange-300/30 flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5">•</span>
-              <span className="text-orange-100">Support for 10+ providers</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="w-5 h-5 rounded-full bg-orange-300/30 flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5">•</span>
-              <span className="text-orange-100">Shareable public leaderboards</span>
-            </li>
-          </ul>
-
-          <p className="text-sm text-orange-200">
-            Open source and free forever
-          </p>
+          {/* Links */}
+          <div className="flex gap-3">
+            <Link
+              href="https://github.com/bhdrdemir/Ordeal"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 border border-zinc-700 text-zinc-400 text-xs hover:border-zinc-500 hover:text-zinc-300 transition-all"
+              style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}
+            >
+              GITHUB
+              <ArrowUpRight className="w-3 h-3" />
+            </Link>
+            <Link
+              href="/docs"
+              className="inline-flex items-center gap-1.5 px-4 py-2 border border-zinc-700 text-zinc-400 text-xs hover:border-zinc-500 hover:text-zinc-300 transition-all"
+              style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}
+            >
+              DOCS
+              <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>

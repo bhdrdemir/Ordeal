@@ -1,18 +1,132 @@
 @import "tailwindcss";
 
-/* ── CSS Custom Properties for Ordeal Theming ── */
+/* ══════════════════════════════════════════════════════
+   ORDEAL — "Technical Elegance" Design System
+   Inspired by: Sutéra grid/blueprint aesthetic
+              + Ordeal orange energy
+   ══════════════════════════════════════════════════════ */
+
+/* ── CSS Custom Properties ── */
 :root {
-  --ordeal-primary: 249, 115, 22;
-  --ordeal-primary-rgb: rgb(var(--ordeal-primary));
-  --ordeal-accent: 249, 115, 22;
-  --ordeal-accent-rgb: rgb(var(--ordeal-accent));
-  --ordeal-background-light: 255, 255, 255;
-  --ordeal-background-dark: 3, 7, 18;
+  --ordeal-orange: #f97316;
+  --ordeal-orange-dark: #ea580c;
+  --ordeal-orange-light: #fb923c;
+  --ordeal-bg: #fafafa;
+  --ordeal-grid-color: rgba(0, 0, 0, 0.06);
+  --ordeal-grid-dot: rgba(0, 0, 0, 0.12);
+  --ordeal-border: rgba(0, 0, 0, 0.08);
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 
-html.dark {
-  --ordeal-background-light: 3, 7, 18;
+/* ── Blueprint Grid Background ── */
+.blueprint-grid {
+  background-image:
+    linear-gradient(var(--ordeal-grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ordeal-grid-color) 1px, transparent 1px);
+  background-size: 120px 120px;
+  background-position: center center;
 }
+
+/* Grid crosshair markers (Sutéra-style) */
+.grid-crosshairs {
+  background-image:
+    radial-gradient(circle, var(--ordeal-grid-dot) 1.5px, transparent 1.5px);
+  background-size: 120px 120px;
+  background-position: center center;
+}
+
+/* ── Technical Window/Panel (Sutéra-style info boxes) ── */
+.tech-panel {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+}
+
+.tech-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.4), transparent);
+}
+
+/* Panel with close button marker */
+.tech-panel-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #71717a;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tech-panel-header::after {
+  content: '×';
+  font-size: 14px;
+  opacity: 0.4;
+}
+
+/* ── Monospace Technical Labels (Sutéra-style) ── */
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #52525b;
+}
+
+.mono-label-sm {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #71717a;
+}
+
+/* ── Connection Lines (Sutéra-style) ── */
+.connection-line {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.connection-line-h {
+  height: 1px;
+  width: 100%;
+}
+
+.connection-line-v {
+  width: 1px;
+  height: 100%;
+}
+
+/* ── Connector Dot ── */
+.connector-dot {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid rgba(0, 0, 0, 0.2);
+  background: white;
+  position: absolute;
+}
+
+.connector-dot-filled {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid var(--ordeal-orange);
+  background: var(--ordeal-orange);
+  position: absolute;
+}
+
+/* ══════════════════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════════════════ */
 
 /* ── Shimmer ── */
 @keyframes shimmer {
@@ -64,37 +178,183 @@ html.dark {
   to { transform: rotate(360deg); }
 }
 
-/* ── Animation Classes ── */
-.animate-shimmer {
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite linear;
+/* ── Gradient Shift (landing) ── */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.animate-float {
-  animation: float 5s ease-in-out infinite;
+/* ── Float Up Particles ── */
+@keyframes float-up {
+  0% {
+    transform: translateY(100vh) scale(0.5);
+    opacity: 0;
+  }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% {
+    transform: translateY(-100vh) scale(0.5);
+    opacity: 0;
+  }
 }
 
-.animate-float-slow {
-  animation: floatSlow 8s ease-in-out infinite;
+/* ── Pulse Glow Landing ── */
+@keyframes pulse-glow-landing {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 3s ease-in-out infinite;
+/* ── Fade In Up ── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.animate-marquee {
-  animation: marquee 30s linear infinite;
+/* ── Fade In ── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.animate-morph {
-  animation: morph 12s ease-in-out infinite;
+/* ── Typing Cursor ── */
+@keyframes typing {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
-.animate-spin-slow {
-  animation: spinSlow 20s linear infinite;
+/* ── Border Flow ── */
+@keyframes border-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
 
-/* ── Hover Lift ── */
+/* ── Line Reveal (Sutéra-style text entrance) ── */
+@keyframes line-reveal {
+  from {
+    transform: translateY(110%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── Slide In Right ── */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ── Slide In Left ── */
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ── Scale In ── */
+@keyframes scale-in {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── Grid Line Draw ── */
+@keyframes draw-line-h {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes draw-line-v {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* ── Orb Pulse (Hero element) ── */
+@keyframes orb-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 40px rgba(249, 115, 22, 0.3),
+      0 0 80px rgba(249, 115, 22, 0.15),
+      0 0 120px rgba(249, 115, 22, 0.05);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow:
+      0 0 60px rgba(249, 115, 22, 0.5),
+      0 0 120px rgba(249, 115, 22, 0.25),
+      0 0 180px rgba(249, 115, 22, 0.1);
+  }
+}
+
+/* ── Scan Line ── */
+@keyframes scan-line {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* ── Counter Tick ── */
+@keyframes counter-tick {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* ══════════════════════════════════════════════════════
+   ANIMATION UTILITY CLASSES
+   ══════════════════════════════════════════════════════ */
+
+.animate-shimmer { background-size: 200% 100%; animation: shimmer 2s infinite linear; }
+.animate-float { animation: float 5s ease-in-out infinite; }
+.animate-float-slow { animation: floatSlow 8s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulseGlow 3s ease-in-out infinite; }
+.animate-marquee { animation: marquee 30s linear infinite; }
+.animate-morph { animation: morph 12s ease-in-out infinite; }
+.animate-spin-slow { animation: spinSlow 20s linear infinite; }
+.animate-gradient-shift { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
+.animate-float-up { animation: float-up 20s ease-in infinite; }
+.animate-pulse-glow-landing { animation: pulse-glow-landing 2s ease-in-out infinite; }
+.animate-fade-in-up { animation: fade-in-up 0.6s ease-out forwards; }
+.animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+.animate-typing { animation: typing 1.5s ease-in-out infinite; }
+.animate-border-flow { animation: border-flow 3s ease infinite; }
+.animate-line-reveal { animation: line-reveal 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.animate-slide-in-right { animation: slide-in-right 0.7s ease-out forwards; }
+.animate-slide-in-left { animation: slide-in-left 0.7s ease-out forwards; }
+.animate-scale-in { animation: scale-in 0.5s ease-out forwards; }
+.animate-orb-pulse { animation: orb-pulse 4s ease-in-out infinite; }
+.animate-draw-line-h { animation: draw-line-h 1.2s ease-out forwards; transform-origin: left; }
+.animate-draw-line-v { animation: draw-line-v 1.2s ease-out forwards; transform-origin: top; }
+
+/* ══════════════════════════════════════════════════════
+   HOVER / INTERACTION EFFECTS
+   ══════════════════════════════════════════════════════ */
+
+/* Hover Lift */
 .hover-lift {
   transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
 }
@@ -103,7 +363,7 @@ html.dark {
   box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
 }
 
-/* ── Hover Glow ── */
+/* Hover Glow */
 .hover-glow {
   transition: box-shadow 0.4s ease;
 }
@@ -111,14 +371,14 @@ html.dark {
   box-shadow: 0 0 40px rgba(249, 115, 22, 0.12), 0 8px 32px -8px rgba(0, 0, 0, 0.1);
 }
 
-/* ── Glass Effect ── */
+/* Glass Effect */
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* ── Gradient Text ── */
+/* Gradient Text */
 .gradient-text {
   background: linear-gradient(135deg, #f97316, #fb923c, #fbbf24);
   -webkit-background-clip: text;
@@ -126,7 +386,7 @@ html.dark {
   background-clip: text;
 }
 
-/* ── Animated Gradient Border ── */
+/* Gradient Border */
 .gradient-border {
   position: relative;
   z-index: 0;
@@ -135,7 +395,7 @@ html.dark {
   content: "";
   position: absolute;
   z-index: -1;
-  inset: -2px;
+  inset: -1px;
   border-radius: inherit;
   background: conic-gradient(from 0deg, #f97316, #fb923c, #fbbf24, #fcd34d, #f97316);
   opacity: 0;
@@ -153,113 +413,10 @@ html.dark {
   background: white;
 }
 
-/* ── Dot Grid Background ── */
-.dot-grid {
-  background-image: radial-gradient(circle, #e4e4e7 1px, transparent 1px);
-  background-size: 24px 24px;
-}
+/* ══════════════════════════════════════════════════════
+   ORDEAL TITLE GLOW
+   ══════════════════════════════════════════════════════ */
 
-/* ── Custom Scrollbar ── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #d4d4d8;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #a1a1aa;
-}
-
-/* ── Selection Color ── */
-::selection {
-  background: rgba(249, 115, 22, 0.15);
-  color: inherit;
-}
-
-/* ── Landing Page Animations ── */
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes float-up {
-  0% {
-    transform: translateY(100vh) scale(0.5);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100vh) scale(0.5);
-    opacity: 0;
-  }
-}
-
-@keyframes pulse-glow-landing {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
-  }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes typing {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-@keyframes border-flow {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
-}
-
-.animate-gradient-shift {
-  background-size: 200% 200%;
-  animation: gradient-shift 8s ease infinite;
-}
-
-.animate-float-up {
-  animation: float-up 20s ease-in infinite;
-}
-
-.animate-pulse-glow-landing {
-  animation: pulse-glow-landing 2s ease-in-out infinite;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.6s ease-out forwards;
-}
-
-.animate-typing {
-  animation: typing 1.5s ease-in-out infinite;
-}
-
-.animate-border-flow {
-  animation: border-flow 3s ease infinite;
-}
-
-/* ── Ordeal Title Glow ── */
 @keyframes ordeal-text-glow {
   0%, 100% {
     text-shadow:
@@ -280,4 +437,89 @@ html.dark {
 .ordeal-glow {
   animation: ordeal-text-glow 3s ease-in-out infinite;
   color: #ea580c;
+}
+
+@keyframes ordeal-text-glow-hero {
+  0%, 100% {
+    color: #ea580c;
+    text-shadow:
+      0 0 10px rgba(249, 115, 22, 0.5),
+      0 0 25px rgba(249, 115, 22, 0.4),
+      0 0 50px rgba(249, 115, 22, 0.3),
+      0 0 80px rgba(255, 106, 0, 0.2),
+      0 0 120px rgba(255, 132, 0, 0.1);
+  }
+  50% {
+    color: #f97316;
+    text-shadow:
+      0 0 15px rgba(249, 115, 22, 0.7),
+      0 0 35px rgba(251, 146, 60, 0.6),
+      0 0 65px rgba(249, 115, 22, 0.5),
+      0 0 100px rgba(255, 106, 0, 0.4),
+      0 0 160px rgba(255, 132, 0, 0.25);
+  }
+}
+
+.ordeal-glow-hero {
+  animation: ordeal-text-glow-hero 3s ease-in-out infinite;
+  color: #f97316 !important;
+  -webkit-text-fill-color: unset !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCROLLBAR & SELECTION
+   ══════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+
+::selection {
+  background: rgba(249, 115, 22, 0.15);
+  color: inherit;
+}
+
+/* ══════════════════════════════════════════════════════
+   MARQUEE TEXT (Section separator)
+   ══════════════════════════════════════════════════════ */
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ══════════════════════════════════════════════════════
+   SCAN LINE EFFECT (Tech feel)
+   ══════════════════════════════════════════════════════ */
+
+.scan-line-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-line-container::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.3), transparent);
+  animation: scan-line 4s linear infinite;
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   PROGRESS BAR LOADING (Sutéra-style)
+   ══════════════════════════════════════════════════════ */
+
+.progress-bar-thin {
+  height: 2px;
+  background: linear-gradient(90deg, var(--ordeal-orange), var(--ordeal-orange-light));
+  border-radius: 1px;
 }

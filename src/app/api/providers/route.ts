@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { rateLimits } from "@/lib/rate-limit";
+import { rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { providerCreateSchema, safeParse } from "@/lib/validation";
 import { BUILTIN_PROVIDERS } from "@/lib/providers/builtin";
 
@@ -74,10 +74,7 @@ export async function POST(req: NextRequest) {
   // Rate limit: 30 API requests per minute
   const limiter = rateLimits.api(session.user.id);
   if (!limiter.success) {
-    return NextResponse.json(
-      { error: "Rate limit exceeded" },
-      { status: 429 }
-    );
+    return rateLimitResponse(limiter.resetAt);
   }
 
   try {

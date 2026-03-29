@@ -26,6 +26,7 @@ interface Criteria {
 export default function NewEvalPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const [highestStep, setHighestStep] = useState(1); // track furthest visited step
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -248,33 +249,41 @@ export default function NewEvalPage() {
 
       {/* Progress Indicator */}
       <div className="mb-8 bg-white rounded-lg border border-zinc-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          {stepTitles.map((_, index) => (
-            <div key={index} className="flex items-center">
-              <button
-                type="button"
-                onClick={() => setCurrentStep(index + 1)}
-                disabled={index + 1 > currentStep && !isStepValid()}
-                className={`w-8 h-8 rounded-full font-semibold text-sm flex items-center justify-center transition-all ${
-                  index + 1 <= currentStep
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-zinc-200 text-zinc-600'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {index + 1}
-              </button>
-              {index < stepTitles.length - 1 && (
-                <div
-                  className={`flex-1 h-1 mx-2 ${
-                    index + 1 < currentStep ? 'bg-orange-500' : 'bg-zinc-200'
+        <div className="flex items-center mb-4">
+          {stepTitles.map((_, index) => {
+            const stepNum = index + 1;
+            const canNavigate = stepNum <= highestStep;
+            return (
+              <div key={index} className="flex items-center flex-1">
+                <button
+                  type="button"
+                  onClick={() => canNavigate && setCurrentStep(stepNum)}
+                  disabled={!canNavigate}
+                  className={`w-8 h-8 rounded-full font-semibold text-sm flex items-center justify-center transition-all shrink-0 ${
+                    stepNum < currentStep
+                      ? 'bg-green-500 text-white'
+                      : stepNum === currentStep
+                      ? 'bg-orange-500 text-white'
+                      : canNavigate
+                      ? 'bg-zinc-300 text-zinc-700 hover:bg-zinc-400 cursor-pointer'
+                      : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
                   }`}
-                />
-              )}
-            </div>
-          ))}
+                >
+                  {index + 1}
+                </button>
+                {index < stepTitles.length - 1 && (
+                  <div
+                    className={`flex-1 h-1 mx-2 ${
+                      stepNum < currentStep ? 'bg-green-400' : 'bg-zinc-200'
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
         <p className="text-sm text-zinc-600">
-          Step {currentStep} of {stepTitles.length}: {stepTitles[currentStep - 1]}
+          Step {currentStep} of {stepTitles.length}: <span className="font-medium">{stepTitles[currentStep - 1]}</span>
         </p>
       </div>
 
@@ -692,7 +701,11 @@ export default function NewEvalPage() {
             {currentStep < 6 && (
               <button
                 type="button"
-                onClick={() => setCurrentStep(currentStep + 1)}
+                onClick={() => {
+                  const next = currentStep + 1;
+                  setCurrentStep(next);
+                  setHighestStep((h) => Math.max(h, next));
+                }}
                 disabled={!isStepValid()}
                 className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:bg-zinc-400 text-white rounded-lg px-6 py-2 font-semibold transition-colors disabled:cursor-not-allowed"
               >
